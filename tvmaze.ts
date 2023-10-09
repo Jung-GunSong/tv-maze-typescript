@@ -7,7 +7,9 @@ const $showsList = $("#showsList");
 const $episodesArea = $("#episodesArea");
 const $searchForm = $("#searchForm");
 
-const TV_MAZE_URL = "https://api.tvmaze.com/"
+const TV_MAZE_URL = "https://api.tvmaze.com/";
+
+const DEFAULT_IMG_URL = "https://tinyurl.com/tv-missing";
 
 
 /** Given a search term, search for tv shows that match that query.
@@ -21,10 +23,31 @@ interface Show{
   id:number;
   name:string;
   summary:string;
-  image:string;
+  image:string; //TODO: add default image URL
 }
 
-async function searchShowsByTerm(term:string):Promise<Show []> {
+interface ShowSearchResp{
+  shows: [];
+}
+
+interface ShowData{
+  show: ShowDetails;
+  summary:string;
+  image: ShowImage;
+}
+
+interface ShowDetails{
+    id: number;
+    name:string;
+    image: string;
+}
+
+interface ShowImage{
+  original:string;
+  medium:string;
+}
+
+async function searchShowsByTerm(term:string):Promise<Show[]> {
   // ADD: Remove placeholder & make request to TVMaze search shows API.
   // return [
   //   {
@@ -46,18 +69,22 @@ async function searchShowsByTerm(term:string):Promise<Show []> {
   // ]
 
   const response  = await fetch(`${TV_MAZE_URL}search/shows?q=${term}`);
-  const data = await response.json() as [];
+  const data = await response.json() as ShowSearchResp;
 
-  const showArray: Show [] = data.map( data => {id: data.show.id, name: data.show.name,
-                                      summary: data.summary, image: data.image.original })
+
+
+  const showArray: Show[] = data.shows.map( (data: ShowData) => ({id: data.show.id, name: data.show.name,
+                                      summary: data.summary, image: data.image.original || DEFAULT_IMG_URL }));
 
   return showArray;
+
+
 }
 
 
 /** Given list of shows, create markup for each and to DOM */
 
-function populateShows(shows) {
+function populateShows(shows: Show[]): void {
   $showsList.empty();
 
   for (let show of shows) {
@@ -65,7 +92,7 @@ function populateShows(shows) {
         `<div data-show-id="${show.id}" class="Show col-md-12 col-lg-6 mb-4">
          <div class="media">
            <img
-              src="http://static.tvmaze.com/uploads/images/medium_portrait/160/401704.jpg"
+              src=${show.image}
               alt="Bletchly Circle San Francisco"
               class="w-25 me-3">
            <div class="media-body">
@@ -87,8 +114,8 @@ function populateShows(shows) {
  *    Hide episodes area (that only gets shown if they ask for episodes)
  */
 
-async function searchForShowAndDisplay() {
-  const term = $("#searchForm-term").val();
+async function searchForShowAndDisplay():Promise<void> {
+  const term = $("#searchForm-term").val() as string;
   const shows = await searchShowsByTerm(term);
 
   $episodesArea.hide();

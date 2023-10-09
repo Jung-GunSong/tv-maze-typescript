@@ -10782,6 +10782,7 @@ var $showsList = $("#showsList");
 var $episodesArea = $("#episodesArea");
 var $searchForm = $("#searchForm");
 var TV_MAZE_URL = "https://api.tvmaze.com/";
+var DEFAULT_IMG_URL = "https://tinyurl.com/tv-missing";
 function searchShowsByTerm(term) {
     return __awaiter(this, void 0, void 0, function () {
         var response, data, showArray;
@@ -10793,13 +10794,8 @@ function searchShowsByTerm(term) {
                     return [4 /*yield*/, response.json()];
                 case 2:
                     data = _a.sent();
-                    showArray = data.map(function (data) {
-                        id: data.show.id, name;
-                        data.show.name,
-                            summary;
-                        data.summary, image;
-                        data.image.original;
-                    });
+                    showArray = data.shows.map(function (data) { return ({ id: data.show.id, name: data.show.name,
+                        summary: data.summary, image: data.image.original || DEFAULT_IMG_URL }); });
                     return [2 /*return*/, showArray];
             }
         });
@@ -10810,7 +10806,7 @@ function populateShows(shows) {
     $showsList.empty();
     for (var _i = 0, shows_1 = shows; _i < shows_1.length; _i++) {
         var show = shows_1[_i];
-        var $show = $("<div data-show-id=\"".concat(show.id, "\" class=\"Show col-md-12 col-lg-6 mb-4\">\n         <div class=\"media\">\n           <img\n              src=\"http://static.tvmaze.com/uploads/images/medium_portrait/160/401704.jpg\"\n              alt=\"Bletchly Circle San Francisco\"\n              class=\"w-25 me-3\">\n           <div class=\"media-body\">\n             <h5 class=\"text-primary\">").concat(show.name, "</h5>\n             <div><small>").concat(show.summary, "</small></div>\n             <button class=\"btn btn-outline-light btn-sm Show-getEpisodes\">\n               Episodes\n             </button>\n           </div>\n         </div>\n       </div>\n      "));
+        var $show = $("<div data-show-id=\"".concat(show.id, "\" class=\"Show col-md-12 col-lg-6 mb-4\">\n         <div class=\"media\">\n           <img\n              src=").concat(show.image, "\n              alt=\"Bletchly Circle San Francisco\"\n              class=\"w-25 me-3\">\n           <div class=\"media-body\">\n             <h5 class=\"text-primary\">").concat(show.name, "</h5>\n             <div><small>").concat(show.summary, "</small></div>\n             <button class=\"btn btn-outline-light btn-sm Show-getEpisodes\">\n               Episodes\n             </button>\n           </div>\n         </div>\n       </div>\n      "));
         $showsList.append($show);
     }
 }
