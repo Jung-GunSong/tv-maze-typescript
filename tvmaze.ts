@@ -1,4 +1,3 @@
-import axios from "axios";
 import jQuery from 'jquery';
 
 const $ = jQuery;
@@ -6,11 +5,19 @@ const $ = jQuery;
 const $showsList = $("#showsList");
 const $episodesArea = $("#episodesArea");
 const $searchForm = $("#searchForm");
-const $episodeButton = $(".Show-getEpisodes")
+const $episodeButtons = $(".Show-getEpisodes")
+const $episodesList = $("#episodesList");
 
 const TV_MAZE_URL = "https://api.tvmaze.com/";
 
 const DEFAULT_IMG_URL = "https://tinyurl.com/tv-missing";
+
+$showsList.on('click', $episodeButtons, async function handleGetEpisode(evt) {
+  console.log("click event triggered");
+  const id = Number($(evt.target).closest(".Show").attr('data-show-id'));
+
+  await searchForEpisodeAndDisplay(id);
+});
 
 
 /** Given a search term, search for tv shows that match that query.
@@ -101,7 +108,7 @@ function populateShows(shows: Show[]): void {
            <div class="media-body">
              <h5 class="text-primary">${show.name}</h5>
              <div><small>${show.summary}</small></div>
-             <button class="btn btn-outline-light btn-sm Show-getEpisodes" id=${show.id}>
+             <button class="btn btn-outline-light btn-sm Show-getEpisodes">
                Episodes
              </button>
            </div>
@@ -170,11 +177,11 @@ async function getEpisodesOfShow(id:number):Promise<Episode[]> {
 
 // function populateEpisodes(episodes) { }
 function populateEpisodes(episodes: Episode[]): void {
-  $episodesArea.empty();
+  $episodesList.empty();
 
   for (let episode of episodes) {
     const $episode = $(
-        `<div data-show-id="${episode.id}" class="Show col-md-12 col-lg-6 mb-4">
+        `<li data-show-id="${episode.id}" class="Show col-md-12 col-lg-6 mb-4">
          <div class="media">
            <div class="media-body">
              <h5 class="text-primary">${episode.name}</h5>
@@ -182,21 +189,33 @@ function populateEpisodes(episodes: Episode[]): void {
              <div><small>Episode ${episode.number}</small></div>
            </div>
          </div>
-       </div>
+       </li>
       `);
 
-    $episodesArea.append($episode);  }
+    $episodesList.append($episode);  }
 }
 
-async function searchForEpisodeAndDisplay():Promise<void> {
-  const iDNumber = Number($episodeButton.attr("id"));
-  const episodes = await getEpisodesOfShow(iDNumber);
+async function searchForEpisodeAndDisplay(id: number):Promise<void> {
+  //const iDNumber = Number($episodeButtons.attr("id"));
+  //console.log("id is ", iDNumber);
+  const episodes = await getEpisodesOfShow(id);
 
   $episodesArea.show();
   populateEpisodes(episodes);
 }
 
-$episodeButton.on("submit", async function (evt) {
-  evt.preventDefault();
-  await searchForEpisodeAndDisplay();
-});
+// $episodeButtons.on("click", async function (evt) {
+//   //evt.preventDefault();
+//   console.log("button click triggered");
+//   await searchForEpisodeAndDisplay();
+// });
+
+//$episodeButtons.on("click", searchForEpisodeAndDisplay);
+
+
+// $showsList.on('click', $episodeButtons, async function handleGetEpisode(evt) {
+//   console.log("click event triggered");
+//   const id = Number($(evt.target).closest(".Show").attr('data-show-id'));
+
+//   await searchForEpisodeAndDisplay(id);
+// });
