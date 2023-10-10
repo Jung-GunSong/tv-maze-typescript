@@ -6,6 +6,7 @@ const $ = jQuery;
 const $showsList = $("#showsList");
 const $episodesArea = $("#episodesArea");
 const $searchForm = $("#searchForm");
+const $episodeButton = $(".Show-getEpisodes")
 
 const TV_MAZE_URL = "https://api.tvmaze.com/";
 
@@ -26,20 +27,20 @@ interface Show{
   image:string; //TODO: add default image URL
 }
 
-interface ShowSearchResp{
-  shows: [];
-}
+// interface ShowSearchResp{
+//   shows: [];
+// }
 
 interface ShowData{
+  score: number;
   show: ShowDetails;
-  summary:string;
-  image: ShowImage;
 }
 
 interface ShowDetails{
     id: number;
     name:string;
-    image: string;
+    summary: string
+    image: ShowImage;
 }
 
 interface ShowImage{
@@ -69,13 +70,15 @@ async function searchShowsByTerm(term:string):Promise<Show[]> {
   // ]
 
   const response  = await fetch(`${TV_MAZE_URL}search/shows?q=${term}`);
-  const data = await response.json() as ShowSearchResp;
+  const data = await response.json() as ShowData[];
+  console.log(`our parsed data is`, data);
 
 
 
-  const showArray: Show[] = data.shows.map( (data: ShowData) => ({id: data.show.id, name: data.show.name,
-                                      summary: data.summary, image: data.image.original || DEFAULT_IMG_URL }));
+  const showArray: Show[] = data.map( (data: ShowData) => ({id: data.show.id, name: data.show.name,
+                                      summary: data.show.summary, image: data.show.image.original || DEFAULT_IMG_URL }));
 
+  console.log(`our array of shows are `, showArray);
   return showArray;
 
 
@@ -98,7 +101,7 @@ function populateShows(shows: Show[]): void {
            <div class="media-body">
              <h5 class="text-primary">${show.name}</h5>
              <div><small>${show.summary}</small></div>
-             <button class="btn btn-outline-light btn-sm Show-getEpisodes">
+             <button class="btn btn-outline-light btn-sm Show-getEpisodes" id=${show.id}>
                Episodes
              </button>
            </div>
@@ -127,13 +130,73 @@ $searchForm.on("submit", async function (evt) {
   await searchForShowAndDisplay();
 });
 
+interface Episode{
+  id:number;
+  name:string;
+  season:number;
+  number:number;
+}
+
+interface EpisodeData{
+  id:number;
+  name:string;
+  season:number;
+  number:number;
+}
 
 /** Given a show ID, get from API and return (promise) array of episodes:
  *      { id, name, season, number }
  */
+async function getEpisodesOfShow(id:number):Promise<Episode[]> {
 
-// async function getEpisodesOfShow(id) { }
+
+  const response  = await fetch(`${TV_MAZE_URL}shows/${id}/episodes`);
+  const data = await response.json() as EpisodeData[];
+
+
+
+
+  const episodeArray: Episode[] = data.map( (data: EpisodeData) => ({id: data.id, name: data.name,
+                                      season: data.season, number: data.number }));
+
+  return episodeArray;
+
+
+}
+
+
 
 /** Write a clear docstring for this function... */
 
 // function populateEpisodes(episodes) { }
+function populateEpisodes(episodes: Episode[]): void {
+  $episodesArea.empty();
+
+  for (let episode of episodes) {
+    const $episode = $(
+        `<div data-show-id="${episode.id}" class="Show col-md-12 col-lg-6 mb-4">
+         <div class="media">
+           <div class="media-body">
+             <h5 class="text-primary">${episode.name}</h5>
+             <div><small>Season ${episode.season}</small></div>
+             <div><small>Episode ${episode.number}</small></div>
+           </div>
+         </div>
+       </div>
+      `);
+
+    $episodesArea.append($episode);  }
+}
+
+async function searchForEpisodeAndDisplay():Promise<void> {
+  const iDNumber = Number($episodeButton.attr("id"));
+  const episodes = await getEpisodesOfShow(iDNumber);
+
+  $episodesArea.show();
+  populateEpisodes(episodes);
+}
+
+$episodeButton.on("submit", async function (evt) {
+  evt.preventDefault();
+  await searchForEpisodeAndDisplay();
+});
